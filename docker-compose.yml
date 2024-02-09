@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:latest
+    container_name: mongo
+    restart: on-failure
+    ports:
+      - '27017:27017'
+    volumes:
+      - 'mongodata:/data/db'
+
+  proxy:
+    build: 
+      context: ./proxy
+      dockerfile: Dockerfile
+    container_name: proxy
+    restart: on-failure
+    depends_on:
+      - 'api'
+      - 'client'
+    ports:
+      - '80:80'
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: api
+    depends_on:
+      - 'mongo'
+    ports:
+      - '5000:5000'
+    env_file:
+      - './api/.env'
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: client
+    ports:
+      - '3000:3000'
+    environment:
+          - WDS_SOCKET_PORT=0
+
+volumes:
+  mongodata:
